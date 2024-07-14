@@ -14,6 +14,7 @@ Lab: Prof YU Keping's Lab
 
 import os
 from flask import Flask
+from src.Utils.config import Config as cfg
 
 app = Flask(__name__)
 
@@ -24,5 +25,5 @@ def hello_world():  # put application's code here
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('FLASK_RUN_PORT', 5000))
+    port = int(cfg.FLASK_RUN_PORT)
     app.run(debug=True, port=port)

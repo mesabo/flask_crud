@@ -1,0 +1,9 @@
+Flask
+pymongo
+pydantic
+pandas
+numpy
+python-dotenv
+flasgger
+pytest
+pytest-flask

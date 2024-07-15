@@ -11,6 +11,7 @@ This repository contains a Flask-based CRUD (Create, Read, Update, Delete) appli
 - **Structured Codebase**: Organized into clearly defined directories for models, routes, services, procedures, utilities, and database configuration.
 
 ## Project Structure
+````
 .
 ├── CHANGELOG.md
 ├── README.md
@@ -33,6 +34,7 @@ This repository contains a Flask-based CRUD (Create, Read, Update, Delete) appli
 ├── app.py
 └── tests
 └── init.py
+````
 
 ## Getting Started
 

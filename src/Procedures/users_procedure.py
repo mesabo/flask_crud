@@ -11,6 +11,7 @@ Univ: Hosei University
 Dept: Science and Engineering
 Lab: Prof YU Keping's Lab
 """
+
 from datetime import datetime
 from io import BytesIO
 from typing import Dict, Any, List
@@ -19,7 +20,6 @@ from ..Models.users_model import UsersModel
 from ..Services.users_service import UsersService
 from ..Utils.exceptions import UserDatabaseError, UserValidationError, UserNotFoundError
 from ..Utils.config import Config as cfg
-
 
 class UserProcedure:
     def __init__(self):
@@ -41,7 +41,7 @@ class UserProcedure:
             user = self.users_service.findById(user_id, self.users_collection)
             if not user:
                 raise UserNotFoundError(f"User with id {user_id} not found")
-            return UsersModel.fromDict(user[0])
+            return UsersModel.from_mongo(user)
         except Exception as e:
             raise UserDatabaseError(f"Error finding user by id: {e}")
 
@@ -56,29 +56,29 @@ class UserProcedure:
     def create_user(self, user_data: Dict[str, Any]) -> str:
         try:
             user = UsersModel(**user_data)
-            user.created = datetime.now()
-            user.updated = datetime.now()
+            user.created_at = datetime.now()
+            user.updated_at = datetime.now()
             created = self.users_service.insertOne(user, self.users_collection)
             return f'Inserted userId {created}'
         except Exception as e:
             raise UserDatabaseError(f"Error inserting user: {str(e)}")
 
-    def create_users(self, users_data: List[Dict[str, Any]]) -> List:
+    def create_users(self, users_data: List[Dict[str, Any]]) -> List[str]:
         try:
             users = [UsersModel(**user_data) for user_data in users_data]
             for user in users:
-                user.created = datetime.now()
-                user.updated = datetime.now()
-            created_ids = self.users_service.insertOne(users, self.users_collection)
+                user.created_at = datetime.now()
+                user.updated_at = datetime.now()
+            created_ids = self.users_service.insertMany(users, self.users_collection)
             return created_ids
         except Exception as e:
-            raise UserDatabaseError(f"Error inserting user: {str(e)}")
+            raise UserDatabaseError(f"Error inserting users: {str(e)}")
 
-    def update_user(self, user_data: Dict[str, Any]) -> str:
+    def update_user(self, user_id: str, update_data: Dict[str, Any]) -> str:
         try:
-            user = UsersModel(**user_data)
-            user.updated = datetime.now()
-            updated = self.users_service.update(user, self.users_collection)
+            user = UsersModel(**update_data)
+            user.updated_at = datetime.now()
+            updated = self.users_service.update(user_id, user, self.users_collection)
             return updated
         except Exception as e:
             raise UserDatabaseError(f"Error updating user: {str(e)}")
@@ -113,7 +113,7 @@ class UserProcedure:
             data = pd.read_csv(file_path)
             users_data = []
             for index, row in data.iterrows():
-                users_data = {
+                user_data = {
                     "username": row["username"],
                     "fullname": row["fullname"],
                     "email": row["email"],
@@ -126,12 +126,10 @@ class UserProcedure:
                         "country": row["address.country"]
                     },
                     "is_active": row["is_active"],
-                    "created_at": datetime.strptime(row["created"], "%Y-%m-%d %H:%M:%S"),
-                    "updated_at": datetime.strptime(row["created"], "%Y-%m-%d %H:%M:%S")
+                    "created_at": datetime.strptime(row["created_at"], "%Y-%m-%d %H:%M:%S"),
+                    "updated_at": datetime.strptime(row["updated_at"], "%Y-%m-%d %H:%M:%S")
                 }
-
-                users_data.append(users_data)
-
+                users_data.append(user_data)
             self.create_users(users_data)
             return "CSV content uploaded and saved successfully"
         except KeyError as e:

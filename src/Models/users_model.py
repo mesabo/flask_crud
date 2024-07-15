@@ -17,14 +17,12 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, Dict, Any
 
-
 class Address(BaseModel):
     street: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
     zipcode: Optional[str] = None
     country: Optional[str] = None
-
 
 class UsersModel(BaseModel):
     id: Optional[str] = None
@@ -40,7 +38,7 @@ class UsersModel(BaseModel):
     def dict(self, **kwargs) -> Dict[str, Any]:
         result = super().dict(**kwargs)
         if '_id' in result:
-            result['id'] = str(result.pop('_id'))
+            result['id'] = str(result.pop('_id', None))
         return result
 
     def to_mongo(self) -> Dict[str, Any]:
@@ -51,5 +49,6 @@ class UsersModel(BaseModel):
 
     @classmethod
     def from_mongo(cls, data: Dict) -> 'UsersModel':
-        data['id'] = str(data.pop('_id'))
+        if '_id' in data:
+            data['id'] = str(data.pop('_id', None))
         return cls(**data)

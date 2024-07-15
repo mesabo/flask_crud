@@ -1,0 +1,55 @@
+{
+  "user": {
+    "address": {
+      "city": "Testville1",
+      "country": "Testland1",
+      "state": "TS",
+      "street": "123 Test St",
+      "zipcode": "12345"
+    },
+    "created_at": "Tue, 16 Jul 2024 00:20:46 GMT",
+    "email": "test.user@example.com",
+    "fullname": "Test User",
+    "id": "66953e4e1a1138761eb4f2f2",
+    "is_active": false,
+    "phone": "1234567890",
+    "updated_at": "Tue, 16 Jul 2024 00:20:46 GMT",
+    "username": "test_user1"
+  },
+  "users": [
+    {
+      "address": {
+        "city": "Testville1",
+        "country": "Testland1",
+        "state": "TS",
+        "street": "123 Test St",
+        "zipcode": "12345"
+      },
+      "created_at": "Tue, 16 Jul 2024 00:20:46 GMT",
+      "email": "test.user@example.com",
+      "fullname": "Test User",
+      "id": "66953e4e1a1138761eb4f2f2",
+      "is_active": false,
+      "phone": "1234567890",
+      "updated_at": "Tue, 16 Jul 2024 00:20:46 GMT",
+      "username": "test_user1"
+    },
+    {
+      "address": {
+        "city": "Testville2",
+        "country": "Testland2",
+        "state": "TS",
+        "street": "123 Test St",
+        "zipcode": "12345"
+      },
+      "created_at": "Tue, 16 Jul 2024 00:20:46 GMT",
+      "email": "test.user@example.com",
+      "fullname": "Test User",
+      "id": "66953e4e1a1138761eb4f2f2",
+      "is_active": false,
+      "phone": "1234567890",
+      "updated_at": "Tue, 16 Jul 2024 00:20:46 GMT",
+      "username": "test_user2"
+    }
+  ]
+}

@@ -11,13 +11,14 @@ Univ: Hosei University
 Dept: Science and Engineering
 Lab: Prof YU Keping's Lab
 """
+
 from bson import ObjectId
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, Dict, Any
 
 
-class Address:
+class Address(BaseModel):
     street: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
@@ -32,20 +33,17 @@ class UsersModel(BaseModel):
     email: str
     phone: Optional[str] = None
     address: Address
-    is_active: False
-    created: Optional[datetime] = Field(default_factory=datetime.now)
-    updated: Optional[datetime] = Field(default_factory=datetime.now)
+    is_active: bool = False
+    created_at: Optional[datetime] = Field(default_factory=datetime.now)
+    updated_at: Optional[datetime] = Field(default_factory=datetime.now)
 
-    def dict(
-            self,
-            **kwargs
-    ) -> Dict[str, Any]:
+    def dict(self, **kwargs) -> Dict[str, Any]:
         result = super().dict(**kwargs)
         if '_id' in result:
-            result['_id'] = str(result.pop('_id', None))
+            result['id'] = str(result.pop('_id'))
         return result
 
-    def to_mongo(self) -> Dict[str]:
+    def to_mongo(self) -> Dict[str, Any]:
         data = self.dict(exclude={'id'})
         if self.id:
             data['_id'] = ObjectId(self.id)
@@ -53,5 +51,5 @@ class UsersModel(BaseModel):
 
     @classmethod
     def from_mongo(cls, data: Dict) -> 'UsersModel':
-        data['_id'] = str(ObjectId(cls.id))
+        data['id'] = str(data.pop('_id'))
         return cls(**data)

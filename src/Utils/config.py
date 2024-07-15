@@ -15,9 +15,11 @@ Lab: Prof YU Keping's Lab
 # Utils/config.py
 import os
 from dotenv import load_dotenv
+import json
 
 # Load environment variables from .env file
 load_dotenv()
+
 
 class Config:
     MONGO_URL = os.getenv("MONGO_URL")
@@ -26,3 +28,6 @@ class Config:
     DB_USER = os.getenv("DB_USER")
     DB_PASSWORD = os.getenv("DB_PASSWORD")
     FLASK_RUN_PORT = os.getenv("FLASK_RUN_PORT", 5000)
+
+    config = json.load(open('src/Data/config.json'))
+    COL_USERS = config.get(['collections']['users_col'], 'Users')

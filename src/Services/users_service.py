@@ -13,80 +13,127 @@ Lab: Prof YU Keping's Lab
 """
 
 from datetime import datetime
-from typing import List
-
-from bson import ObjectId
-
-from ..Database.db_config import Database
+from io import BytesIO
+from typing import Dict, Any, List
+import pandas as pd
 from ..Models.users_model import UsersModel
+from ..Services.users_service import UsersService
+from ..Utils.exceptions import UserDatabaseError, UserValidationError, UserNotFoundError
+from ..Utils.config import Config as cfg
 
 
-class UsersService:
+class UserProcedure:
     def __init__(self):
-        db_manager = Database()
-        self.db = db_manager.get_db()
+        self.users_service = UsersService()
+        self.users_collection = cfg.COL_USERS
 
-    def insertOne(self, element: UsersModel, collection_name: str) -> str:
-        element.created = datetime.now()
-        element.updated = datetime.now()
-        inserted = self.db[collection_name].insert_one(element.to_mongo())
-        return str(inserted.inserted_id)
+    def get_user_by_username_or_email_or_phone(self, username: str, email: str, phone: str) -> UsersModel:
+        criteria = {"$or": [{"username": username}, {"email": email}, {"phone": phone}]}
+        try:
+            user = self.users_service.find(criteria, self.users_collection)
+            if not user:
+                raise UserNotFoundError(f"User with username {username}, email {email}, phone {phone} not found")
+            return UsersModel.from_mongo(user[0])
+        except Exception as e:
+            raise UserDatabaseError(f"Error finding user: {str(e)}")
 
-    def insertMany(self, elements: List[UsersModel], collection_name: str) -> list[str]:
-        for element in elements:
-            element.created = datetime.now()
-            element.updated = datetime.now()
-        mongo_data = [element.to_mongo() for element in elements]
-        inserted = self.db[collection_name].insert_many(mongo_data)
-        return [str(id) for id in inserted.inserted_ids]
+    def get_user_by_id(self, user_id: str) -> UsersModel:
+        try:
+            user = self.users_service.findById(user_id, self.users_collection)
+            if not user:
+                raise UserNotFoundError(f"User with id {user_id} not found")
+            return UsersModel.from_mongo(user)
+        except Exception as e:
+            raise UserDatabaseError(f"Error finding user by id: {e}")
 
-    def find(self, criteria, collection_name, projection=None, sort=None, limit=0, cursor=False):
-        if "id" in criteria:
-            criteria["_id"] = ObjectId(criteria.pop("id"))
-        found = self.db[collection_name].find(filter=criteria, projection=projection, sort=sort, limit=limit)
-        if cursor:
-            return found
-        found = list(found)
-        for i in range(len(found)):
-            if "_id" in found[i]:
-                found[i]["id"] = str(found[i].pop("_id"))
-        return found
+    def get_all_users(self) -> List[UsersModel]:
+        try:
+            users = self.users_service.find({}, self.users_collection)
+            users_list = [UsersModel.from_mongo(user) for user in users]
+            return users_list
+        except Exception as e:
+            raise UserDatabaseError(f'Error finding all users: {str(e)}')
 
-    def findById(self, id, collection_name):
-        found = self.db[collection_name].find_one({"_id": ObjectId(id)})
-        if found is None:
-            return None
-        if "_id" in found:
-            found["id"] = str(found.pop("_id"))
-        return found
+    def create_user(self, user_data: Dict[str, Any]) -> str:
+        try:
+            user = UsersModel(**user_data)
+            user.created_at = datetime.now()
+            user.updated_at = datetime.now()
+            created = self.users_service.insertOne(user, self.users_collection)
+            return f'Inserted userId {created}'
+        except Exception as e:
+            raise UserDatabaseError(f"Error inserting user: {str(e)}")
 
-    def update(self, id, element: UsersModel, collection_name: str) -> str:
-        criteria = {"_id": ObjectId(id)}
-        element.updated = datetime.now()
-        if "id" in element:
-            del element["id"]
-        set_obj = {"$set": element.to_mongo()}
-        updated = self.db[collection_name].update_one(criteria, set_obj)
-        if updated.matched_count == 1:
-            return f"Record updated successfully: {updated.upserted_id}"
-        else:
-            return f"Unable to update the record: {id}"
+    def create_users(self, users_data: List[Dict[str, Any]]) -> List[str]:
+        try:
+            users = [UsersModel(**user_data) for user_data in users_data]
+            for user in users:
+                user.created_at = datetime.now()
+                user.updated_at = datetime.now()
+            created_ids = self.users_service.insertMany(users, self.users_collection)
+            return created_ids
+        except Exception as e:
+            raise UserDatabaseError(f"Error inserting users: {str(e)}")
 
-    def deleteOne(self, id, collection_name: str) -> bool:
-        criteria = {"_id": ObjectId(id)}
-        deleted = self.db[collection_name].delete_one(criteria)
-        if deleted.deleted_count == 1:
-            return f"Record deleted successfully: {id}"
-        else:
-            return f"Unable to delete the record: {id}"
+    def update_user(self, user_id: str, update_data: Dict[str, Any]) -> str:
+        try:
+            user = UsersModel(**update_data)
+            user.updated_at = datetime.now()
+            updated = self.users_service.update(user_id, user, self.users_collection)
+            return updated
+        except Exception as e:
+            raise UserDatabaseError(f"Error updating user: {str(e)}")
 
-    def deleteMany(self, ids: List[str], collection_name: str) -> List[str]:
-        results = []
-        for id in ids:
-            criteria = {"_id": ObjectId(id)}
-            deleted = self.db[collection_name].delete_one(criteria)
-            if deleted.deleted_count == 1:
-                results.append(f"Record deleted successfully: {id}")
-            else:
-                results.append(f"Unable to delete the record: {id}")
-        return results
+    def delete_user(self, user_id: str) -> str:
+        try:
+            deleted = self.users_service.deleteOne(user_id, self.users_collection)
+            return deleted
+        except Exception as e:
+            raise UserDatabaseError(f"Error deleting user: {str(e)}")
+
+    def delete_users(self, user_ids: List[str]) -> List[str]:
+        try:
+            deleted = self.users_service.deleteMany(user_ids, self.users_collection)
+            return deleted
+        except Exception as e:
+            raise UserDatabaseError(f"Error deleting users: {str(e)}")
+
+    def download_csv(self) -> BytesIO:
+        try:
+            users = self.get_all_users()
+            df = pd.DataFrame([user.dict() for user in users])
+            output = BytesIO()
+            df.to_csv(output, index=False)
+            output.seek(0)
+            return output
+        except Exception as e:
+            raise UserDatabaseError(f"Error downloading CSV: {str(e)}")
+
+    def upload_csv(self, file_path: str) -> str:
+        try:
+            data = pd.read_csv(file_path)
+            users_data = []
+            for index, row in data.iterrows():
+                user_data = {
+                    "username": row["username"],
+                    "fullname": row["fullname"],
+                    "email": row["email"],
+                    "phone": row["phone"],
+                    "address": {
+                        "street": row["address.street"],
+                        "city": row["address.city"],
+                        "state": row["address.state"],
+                        "zipcode": row["address.zipcode"],
+                        "country": row["address.country"]
+                    },
+                    "is_active": row["is_active"],
+                    "created_at": datetime.strptime(row["created_at"], "%Y-%m-%d %H:%M:%S"),
+                    "updated_at": datetime.strptime(row["updated_at"], "%Y-%m-%d %H:%M:%S")
+                }
+                users_data.append(user_data)
+            self.create_users(users_data)
+            return "CSV content uploaded and saved successfully"
+        except KeyError as e:
+            raise UserValidationError(f"Missing required field in CSV: {str(e)}")
+        except Exception as e:
+            raise UserDatabaseError(f"Error uploading CSV: {str(e)}")

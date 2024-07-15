@@ -72,7 +72,7 @@ This repository contains a Flask-based CRUD (Create, Read, Update, Delete) appli
 
 5. **Run the application**:
     ```sh
-    python src.py
+    python app.py
     ```
 
 6. **Access Swagger UI**:

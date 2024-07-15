@@ -23,3 +23,10 @@ All notable changes to this project will be documented in this file.
 - Error handling and custom exceptions
 - Unit tests for all CRUD operations
 - Documentation for setup and usage
+
+## [1.0.0] - 2024-07-16
+
+### Added
+- Complete Models, Services, Procedures, Routes
+- Set up SwaggerUI for web simulation
+- Initialization of Tests --> to be continued

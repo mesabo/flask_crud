@@ -12,3 +12,14 @@ Dept: Science and Engineering
 Lab: Prof YU Keping's Lab
 """
 
+from pymongo import MongoClient
+from ..Utils.config import Config as cfg
+
+
+class Database:
+    def __init__(self):
+        self.client = MongoClient(cfg.MONGO_URL)
+        self.db = self.client[cfg.DB_NAME]
+
+    def get_db(self):
+        return self.db

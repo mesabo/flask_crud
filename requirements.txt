@@ -1,0 +1,10 @@
+Flask
+flask_cors
+pymongo
+pydantic
+pandas
+numpy
+python-dotenv
+flasgger
+pytest
+pytest-flask

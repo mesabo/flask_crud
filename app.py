@@ -18,7 +18,6 @@ from flasgger import Swagger
 from src.Routes.users_route import users_bp_route
 from src.Utils.exceptions import UserNotFoundError, UserValidationError, UserDatabaseError
 from src.Utils.config import Config as cfg
-import os
 import json
 
 app = Flask(__name__)

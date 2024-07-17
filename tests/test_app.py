@@ -14,7 +14,6 @@ Lab: Prof YU Keping's Lab
 
 import json
 from io import BytesIO
-from datetime import datetime
 
 def test_get_users(client):
     response = client.get('/users/')

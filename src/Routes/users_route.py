@@ -11,6 +11,8 @@ Univ: Hosei University
 Dept: Science and Engineering
 Lab: Prof YU Keping's Lab
 """
+
+
 from flask import Blueprint, request, jsonify, send_file
 from ..Procedures.users_procedure import UserProcedure
 from ..Utils.exceptions import UserValidationError, UserNotFoundError, UserDatabaseError
@@ -18,7 +20,6 @@ import os
 
 users_bp_route = Blueprint('users', __name__)
 user_procedure = UserProcedure()
-
 
 @users_bp_route.route('/', methods=['GET'])
 def home():
@@ -32,8 +33,7 @@ def get_users():
     except UserDatabaseError as e:
         return jsonify({"error": str(e)}), 500
 
-
-@users_bp_route.route('/users/<string:user_id>/', methods=['GET'])
+@users_bp_route.route('/users/<int:user_id>/', methods=['GET'])
 def get_user(user_id):
     try:
         user = user_procedure.get_user_by_id(user_id)
@@ -42,7 +42,6 @@ def get_user(user_id):
         return jsonify({"error": str(e)}), 404
     except UserDatabaseError as e:
         return jsonify({"error": str(e)}), 500
-
 
 @users_bp_route.route('/users/', methods=['POST'])
 def add_user():
@@ -58,8 +57,7 @@ def add_user():
     except UserDatabaseError as e:
         return jsonify({"error": str(e)}), 500
 
-
-@users_bp_route.route('/users/<string:user_id>/', methods=['PUT'])
+@users_bp_route.route('/users/<int:user_id>/', methods=['PUT'])
 def update_user(user_id):
     data = request.get_json()
     if not data:
@@ -75,8 +73,7 @@ def update_user(user_id):
     except UserDatabaseError as e:
         return jsonify({"error": str(e)}), 500
 
-
-@users_bp_route.route('/users/<string:user_id>/', methods=['DELETE'])
+@users_bp_route.route('/users/<int:user_id>/', methods=['DELETE'])
 def delete_user(user_id):
     try:
         response = user_procedure.delete_user(user_id)
@@ -86,9 +83,10 @@ def delete_user(user_id):
     except UserDatabaseError as e:
         return jsonify({"error": str(e)}), 500
 
-
 @users_bp_route.route('/users/upload_csv', methods=['POST'])
 def upload_csv():
+    print("Yaya")
+
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
 
@@ -107,7 +105,6 @@ def upload_csv():
             return jsonify({"error": str(e)}), 400
         except UserDatabaseError as e:
             return jsonify({"error": str(e)}), 500
-
 
 @users_bp_route.route('/users/download_csv', methods=['GET'])
 def download_csv():

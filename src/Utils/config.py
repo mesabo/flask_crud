@@ -19,15 +19,13 @@ import json
 # Load environment variables from .env file
 load_dotenv()
 
-
 class Config:
-    MONGO_URL = os.getenv("MONGO_URL")
-    DB_URL = os.getenv("DB_URL")
+    DB_HOST = os.getenv("DB_HOST", "localhost")
     DB_NAME = os.getenv("DB_NAME")
     DB_USER = os.getenv("DB_USER")
     DB_PASSWORD = os.getenv("DB_PASSWORD")
     FLASK_RUN_PORT = os.getenv("FLASK_RUN_PORT", 5000)
-    SWAGGER_HOST = os.getenv("SWAGGER_HOST", "localhost:5000")
+    SWAGGER_HOST = os.getenv("SWAGGER_HOST", "localhost:5001")
 
     # Use relative path to load the config.json
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -39,6 +37,7 @@ class Config:
         config = json.load(f)
 
     COL_USERS = config.get('collections', {}).get('users_col', 'Users')
+    COL_ADDRESSES = config.get('collections', {}).get('addresses_col', 'Address')
 
     def test_data(self) -> json:
         test_data_path = os.path.join(self.data_dir, 'test_data.json')

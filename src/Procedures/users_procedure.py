@@ -13,13 +13,14 @@ Lab: Prof YU Keping's Lab
 """
 
 from datetime import datetime
-from io import BytesIO
 from typing import Dict, Any, List
+from io import BytesIO
 import pandas as pd
-from ..Models.users_model import UsersModel
+from ..Models.users_model import UsersModel, Address
 from ..Services.users_service import UsersService
 from ..Utils.exceptions import UserDatabaseError, UserValidationError, UserNotFoundError
 from ..Utils.config import Config as cfg
+
 
 class UserProcedure:
     def __init__(self):
@@ -29,73 +30,65 @@ class UserProcedure:
     def get_user_by_username_or_email_or_phone(self, username: str, email: str, phone: str) -> UsersModel:
         criteria = {"$or": [{"username": username}, {"email": email}, {"phone": phone}]}
         try:
-            user = self.users_service.find(criteria, self.users_collection)
-            if not user:
+            users = self.users_service.find(criteria)
+            if not users:
                 raise UserNotFoundError(f"User with username {username}, email {email}, phone {phone} not found")
-            return UsersModel.from_mongo(user[0])
+            return UsersModel(**users[0])
         except Exception as e:
             raise UserDatabaseError(f"Error finding user: {str(e)}")
 
-    def get_user_by_id(self, user_id: str) -> UsersModel:
+    def get_user_by_id(self, user_id: int) -> UsersModel:
         try:
-            user = self.users_service.findById(user_id, self.users_collection)
+            user = self.users_service.find_by_id(user_id)
             if not user:
                 raise UserNotFoundError(f"User with id {user_id} not found")
-            return UsersModel.from_mongo(user)
+            return UsersModel(**user)
         except Exception as e:
-            raise UserDatabaseError(f"Error finding user by id: {e}")
+            raise UserDatabaseError(f"Error finding user by id: {str(e)}")
 
     def get_all_users(self) -> List[UsersModel]:
         try:
-            users = self.users_service.find({}, self.users_collection)
-            users_list = [UsersModel.from_mongo(user) for user in users]
-            return users_list
+            users = self.users_service.find({})
+            return [UsersModel(**user) for user in users]
         except Exception as e:
             raise UserDatabaseError(f'Error finding all users: {str(e)}')
 
-    def create_user(self, user_data: Dict[str, Any]) -> str:
+    def create_user(self, user_data: Dict[str, Any]) -> int:
         try:
             user = UsersModel(**user_data)
             user.created_at = datetime.now()
             user.updated_at = datetime.now()
-            created = self.users_service.insertOne(user, self.users_collection)
-            return f'Inserted userId {created}'
+            created_id = self.users_service.insert_one(user)
+            return created_id
         except Exception as e:
             raise UserDatabaseError(f"Error inserting user: {str(e)}")
 
-    def create_users(self, users_data: List[Dict[str, Any]]) -> List[str]:
+    def create_users(self, users_data: List[Dict[str, Any]]) -> List[int]:
         try:
             users = [UsersModel(**user_data) for user_data in users_data]
             for user in users:
                 user.created_at = datetime.now()
                 user.updated_at = datetime.now()
-            created_ids = self.users_service.insertMany(users, self.users_collection)
+            created_ids = self.users_service.insert_many(users)
             return created_ids
         except Exception as e:
             raise UserDatabaseError(f"Error inserting users: {str(e)}")
 
-    def update_user(self, user_id: str, update_data: Dict[str, Any]) -> str:
+    def update_user(self, user_id: int, update_data: Dict[str, Any]) -> str:
         try:
             user = UsersModel(**update_data)
             user.updated_at = datetime.now()
-            updated = self.users_service.update(user_id, user, self.users_collection)
+            updated = self.users_service.update(user_id, user)
             return updated
         except Exception as e:
             raise UserDatabaseError(f"Error updating user: {str(e)}")
 
-    def delete_user(self, user_id: str) -> str:
+    def delete_user(self, user_id: int) -> str:
         try:
-            deleted = self.users_service.deleteOne(user_id, self.users_collection)
+            deleted = self.users_service.delete_one(user_id)
             return deleted
         except Exception as e:
             raise UserDatabaseError(f"Error deleting user: {str(e)}")
-
-    def delete_users(self, user_ids: List[str]) -> List[str]:
-        try:
-            deleted = self.users_service.deleteMany(user_ids, self.users_collection)
-            return deleted
-        except Exception as e:
-            raise UserDatabaseError(f"Error deleting users: {str(e)}")
 
     def download_csv(self) -> BytesIO:
         try:
@@ -136,3 +129,4 @@ class UserProcedure:
             raise UserValidationError(f"Missing required field in CSV: {str(e)}")
         except Exception as e:
             raise UserDatabaseError(f"Error uploading CSV: {str(e)}")
+

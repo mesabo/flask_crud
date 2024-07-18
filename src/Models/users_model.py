@@ -12,7 +12,6 @@ Dept: Science and Engineering
 Lab: Prof YU Keping's Lab
 """
 
-from bson import ObjectId
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, Dict, Any
@@ -25,7 +24,7 @@ class Address(BaseModel):
     country: Optional[str] = None
 
 class UsersModel(BaseModel):
-    id: Optional[str] = None
+    id: Optional[int] = None
     username: str
     fullname: Optional[str] = None
     email: str
@@ -37,18 +36,11 @@ class UsersModel(BaseModel):
 
     def dict(self, **kwargs) -> Dict[str, Any]:
         result = super().dict(**kwargs)
-        if '_id' in result:
-            result['id'] = str(result.pop('_id', None))
         return result
 
     def to_mongo(self) -> Dict[str, Any]:
-        data = self.dict(exclude={'id'})
-        if self.id:
-            data['_id'] = ObjectId(self.id)
-        return data
+        return self.dict(exclude={'id'})
 
     @classmethod
     def from_mongo(cls, data: Dict) -> 'UsersModel':
-        if '_id' in data:
-            data['id'] = str(data.pop('_id', None))
         return cls(**data)

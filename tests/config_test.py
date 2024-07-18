@@ -11,28 +11,17 @@ Univ: Hosei University
 Dept: Science and Engineering
 Lab: Prof YU Keping's Lab
 """
-import json
+
+# tests/config_test.py
 import pytest
 import sys
 import os
-from app import app as flask_app
-from src.Utils.config import Config as cfg
+from app import app
+
 # Ensure the app module can be found
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-
-
 @pytest.fixture
-def app():
-    flask_app.config['TESTING'] = True
-    return flask_app
-
-
-@pytest.fixture
-def client(app):
-    return app.test_client()
-
-
-@pytest.fixture
-def test_data() -> json:
-    return cfg.test_data()
+def client():
+    with app.test_client() as client:
+        yield client

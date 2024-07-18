@@ -11,79 +11,103 @@ Univ: Hosei University
 Dept: Science and Engineering
 Lab: Prof YU Keping's Lab
 """
-
-from datetime import datetime
-from typing import List
-from bson import ObjectId
+from typing import List, Dict, Any
 from ..Database.db_config import Database
-from ..Models.users_model import UsersModel
+from ..Models.users_model import UsersModel, Address
+
 
 class UsersService:
     def __init__(self):
         db_manager = Database()
-        self.db = db_manager.get_db()
+        self.connection = db_manager.get_connection()
 
-    def insertOne(self, element: UsersModel, collection_name: str) -> str:
-        element.created_at = datetime.now()
-        element.updated_at = datetime.now()
-        inserted = self.db[collection_name].insert_one(element.to_mongo())
-        return str(inserted.inserted_id)
+    def insert_one(self, element: UsersModel) -> int:
+        with self.connection.cursor() as cursor:
+            sql_user = """
+                INSERT INTO Users (username, fullname, email, phone, is_active, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql_user, (
+                element.username, element.fullname, element.email,
+                element.phone, element.is_active, element.created_at, element.updated_at
+            ))
+            user_id = cursor.lastrowid
 
-    def insertMany(self, elements: List[UsersModel], collection_name: str) -> list[str]:
-        for element in elements:
-            element.created_at = datetime.now()
-            element.updated_at = datetime.now()
-        mongo_data = [element.to_mongo() for element in elements]
-        inserted = self.db[collection_name].insert_many(mongo_data)
-        return [str(id) for id in inserted.inserted_ids]
+            sql_address = """
+                INSERT INTO Address (street, city, state, zipcode, country, user_id)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql_address, (
+                element.address.street, element.address.city, element.address.state,
+                element.address.zipcode, element.address.country, user_id
+            ))
 
-    def find(self, criteria, collection_name, projection=None, sort=None, limit=0, cursor=False):
-        if "id" in criteria:
-            criteria["_id"] = ObjectId(criteria.pop("id"))
-        found = self.db[collection_name].find(filter=criteria, projection=projection, sort=sort, limit=limit)
-        if cursor:
-            return found
-        found = list(found)
-        for i in range(len(found)):
-            if "_id" in found[i]:
-                found[i]["id"] = str(found[i].pop("_id"))
-        return found
+        self.connection.commit()
+        return user_id
 
-    def findById(self, id, collection_name):
-        found = self.db[collection_name].find_one({"_id": ObjectId(id)})
-        if found is None:
-            return None
-        if "_id" in found:
-            found["id"] = str(found.pop("_id"))
-        return found
+    def insert_many(self, elements: List[UsersModel]) -> List[int]:
+        user_ids = []
+        with self.connection.cursor() as cursor:
+            for element in elements:
+                user_id = self.insert_one(element)
+                user_ids.append(user_id)
+        return user_ids
 
-    def update(self, id, element: UsersModel, collection_name: str) -> str:
-        criteria = {"_id": ObjectId(id)}
-        element.updated_at = datetime.now()
-        if "id" in element:
-            del element["id"]
-        set_obj = {"$set": element.to_mongo()}
-        updated = self.db[collection_name].update_one(criteria, set_obj)
-        if updated.matched_count == 1:
-            return f"Record updated successfully: {updated.upserted_id}"
-        else:
-            return f"Unable to update the record: {id}"
+    def find(self, criteria: Dict[str, Any]) -> List[Dict[str, Any]]:
+        with self.connection.cursor() as cursor:
+            sql = "SELECT * FROM Users"
+            cursor.execute(sql)
+            users = cursor.fetchall()
 
-    def deleteOne(self, id, collection_name: str) -> str:
-        criteria = {"_id": ObjectId(id)}
-        deleted = self.db[collection_name].delete_one(criteria)
-        if deleted.deleted_count == 1:
-            return f"Record deleted successfully: {id}"
-        else:
-            return f"Unable to delete the record: {id}"
+            sql = "SELECT * FROM Address WHERE user_id = %s"
+            for user in users:
+                cursor.execute(sql, (user['id'],))
+                address = cursor.fetchone()
+                user['address'] = address
 
-    def deleteMany(self, ids: List[str], collection_name: str) -> List[str]:
-        results = []
-        for id in ids:
-            criteria = {"_id": ObjectId(id)}
-            deleted = self.db[collection_name].delete_one(criteria)
-            if deleted.deleted_count == 1:
-                results.append(f"Record deleted successfully: {id}")
-            else:
-                results.append(f"Unable to delete the record: {id}")
-        return results
+        return users
+
+    def find_by_id(self, id: int) -> Dict[str, Any]:
+        with self.connection.cursor() as cursor:
+            sql_user = "SELECT * FROM Users WHERE id = %s"
+            cursor.execute(sql_user, (id,))
+            user = cursor.fetchone()
+
+            if user:
+                sql_address = "SELECT * FROM Address WHERE user_id = %s"
+                cursor.execute(sql_address, (id,))
+                address = cursor.fetchone()
+                user['address'] = address
+
+        return user
+
+    def update(self, id: int, element: UsersModel) -> str:
+        with self.connection.cursor() as cursor:
+            sql_user = """
+                UPDATE Users SET username = %s, fullname = %s, email = %s, phone = %s, is_active = %s, updated_at = %s
+                WHERE id = %s
+            """
+            cursor.execute(sql_user, (
+                element.username, element.fullname, element.email,
+                element.phone, element.is_active, element.updated_at, id
+            ))
+
+            sql_address = """
+                UPDATE Address SET street = %s, city = %s, state = %s, zipcode = %s, country = %s
+                WHERE user_id = %s
+            """
+            cursor.execute(sql_address, (
+                element.address.street, element.address.city, element.address.state,
+                element.address.zipcode, element.address.country, id
+            ))
+
+        self.connection.commit()
+        return "Record updated successfully"
+
+    def delete_one(self, id: int) -> str:
+        with self.connection.cursor() as cursor:
+            sql_user = "DELETE FROM Users WHERE id = %s"
+            cursor.execute(sql_user, (id,))
+
+        self.connection.commit()
+        return "Record deleted successfully"

@@ -1,6 +1,7 @@
 {
   "collections": {
     "users_col": "Users",
+    "addresses_col": "Address",
     "authors_col": "Authors"
   }
 }

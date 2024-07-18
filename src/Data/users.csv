@@ -1,0 +1,3 @@
+id,username,fullname,email,phone,address.street,address.city,address.state,address.zipcode,address.country,is_active,created_at,updated_at
+1,test_user1,Test User One,test.user1@example.com,1234567890,123 Test St,Testville,TS,12345,Testland,True,2024-07-14 20:00:00,2024-07-14 20:00:00
+2,test_user2,Test User Two,test.user2@example.com,0987654321,456 Test Ave,Testopolis,TO,54321,Testland,False,2024-07-15 21:00:00,2024-07-15 21:00:00

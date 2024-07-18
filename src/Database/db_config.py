@@ -12,14 +12,24 @@ Dept: Science and Engineering
 Lab: Prof YU Keping's Lab
 """
 
-from pymongo import MongoClient
+import pymysql
+from ..Utils.config import Config as cfg
+
+import pymysql
+from pymysql.cursors import DictCursor
 from ..Utils.config import Config as cfg
 
 
 class Database:
     def __init__(self):
-        self.client = MongoClient(cfg.MONGO_URL)
-        self.db = self.client[cfg.DB_NAME]
+        self.connection = pymysql.connect(
+            host=cfg.DB_HOST,
+            user=cfg.DB_USER,
+            password=cfg.DB_PASSWORD,
+            database=cfg.DB_NAME,
+            cursorclass=DictCursor
+        )
 
-    def get_db(self):
-        return self.db
+    def get_connection(self):
+        return self.connection
+

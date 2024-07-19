@@ -11,6 +11,7 @@ Univ: Hosei University
 Dept: Science and Engineering
 Lab: Prof YU Keping's Lab
 """
+
 from typing import List, Dict, Any
 from ..Database.db_config import Database
 from ..Models.users_model import UsersModel, Address

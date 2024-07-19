@@ -27,25 +27,8 @@ CORS(app)
 with open('src/Data/swagger.json') as swagger_file:
     swagger_template = json.load(swagger_file)
 
-# Set the host dynamically
 swagger_template['host'] = cfg.SWAGGER_HOST
-
-swagger_config = {
-    "headers": [],
-    "specs": [
-        {
-            "endpoint": 'apispec_1',
-            "route": '/apispec_1.json',
-            "rule_filter": lambda rule: True,
-            "model_filter": lambda tag: True,
-        }
-    ],
-    "static_url_path": "/flasgger_static",
-    "swagger_ui": True,
-    "specs_route": "/"
-}
-
-Swagger(app, config=swagger_config, template=swagger_template)
+Swagger(app, template=swagger_template)
 
 # Register the blueprint
 app.register_blueprint(users_bp_route)
